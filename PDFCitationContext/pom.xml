@@ -1,0 +1,337 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <groupId>gov.lanl.urlcontext</groupId>
+  <artifactId>urlcontext</artifactId>
+  <version>1.0-SNAPSHOT</version>
+
+  <name>citcontext</name>
+  <!-- FIXME change it to the project's website -->
+  <url>http://www.example.com</url>
+
+  <properties>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+ <!--   <maven.compiler.source>1.8</maven.compiler.source>
+    <maven.compiler.target>1.8</maven.compiler.target> -->
+     <maven.compiler.source>1.7</maven.compiler.source>
+        <maven.compiler.target>1.7</maven.compiler.target>
+  </properties>
+   <repositories>
+        <repository>
+            <id>grobid</id>
+            <name>GROBID DIY repo</name>
+            <url>https://grobid.s3.eu-west-1.amazonaws.com/repo/</url>
+        </repository>
+        <repository>
+		<id>datapipeline-mvn-repo</id>
+		<url>https://raw.github.com/fredtucs/mvnrepository/mvn-repo/</url>
+		<snapshots>
+			<enabled>true</enabled>
+			<updatePolicy>always</updatePolicy>
+		</snapshots>
+	</repository>
+    </repositories>   
+  <dependencies>
+	
+    <dependency>
+	<groupId>com.northconcepts</groupId>
+	<artifactId>datapipeline</artifactId>
+	<version>2.3.3</version>
+</dependency>
+	     <!-- open nlp -->
+    <dependency> 
+         <groupId>org.apache.opennlp</groupId> 
+         <artifactId>opennlp-tools</artifactId> 
+         <version>1.9.3</version> 
+     </dependency> 
+     <dependency> 
+         <groupId>org.apache.opennlp</groupId> 
+         <artifactId>opennlp-uima</artifactId> 
+         <version>1.9.3</version> 
+      </dependency>   
+    <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+      <version>4.11</version>
+      <scope>test</scope>
+    </dependency>
+     <!-- tika -->
+     <!-- https://mvnrepository.com/artifact/org.apache.tika/tika-core -->
+  <dependency>
+    <groupId>org.apache.tika</groupId>
+    <artifactId>tika-core</artifactId>
+    <version>2.7.0</version>
+</dependency>
+<dependency>
+    <groupId>org.apache.tika</groupId>
+    <artifactId>tika-parsers</artifactId>
+    <version>2.7.0</version>
+    <type>pom</type>
+     <exclusions>
+            <exclusion>
+                <groupId>xml-apis</groupId>
+                <artifactId>xml-apis</artifactId>
+            </exclusion>
+        </exclusions>
+</dependency>
+<dependency>
+        <groupId>org.apache.pdfbox</groupId>
+        <artifactId>pdfbox</artifactId>
+        <version>2.0.5</version>
+    </dependency>
+<dependency>
+    <groupId>org.apache.tika</groupId>
+    <artifactId>tika-parser-ocr-module</artifactId>
+    <version>2.7.0</version>
+    <exclusions>
+            <exclusion>
+                <groupId>xml-apis</groupId>
+                <artifactId>xml-apis</artifactId>
+            </exclusion>
+        </exclusions>
+</dependency>  
+<dependency>
+    <groupId>org.nibor.autolink</groupId>
+    <artifactId>autolink</artifactId>
+    <version>0.11.0</version>
+</dependency>
+ <dependency>
+  <groupId>com.opencsv</groupId>
+  <artifactId>opencsv</artifactId>
+  <version>3.10</version>
+</dependency>
+<dependency>
+    <groupId>org.apache.commons</groupId>
+    <artifactId>commons-csv</artifactId>
+    <version>1.8</version>
+</dependency>
+ 
+    <dependency>
+      <groupId>org.apache.tika</groupId>
+      <artifactId>tika-parsers</artifactId>
+      <version>1.18</version>
+      <exclusions>
+            <exclusion>
+                <groupId>xml-apis</groupId>
+                <artifactId>xml-apis</artifactId>
+            </exclusion>
+        </exclusions>
+    </dependency>  
+<dependency>
+<groupId>net.minidev</groupId>
+<artifactId>accessors-smart</artifactId>
+<version>1.2</version>
+</dependency>
+<dependency>
+    <groupId>javax.activation</groupId>
+    <artifactId>activation</artifactId>
+    <version>1.1.1</version>
+</dependency>
+<!-- API, java.xml.bind module -->
+<dependency>
+    <groupId>jakarta.xml.bind</groupId>
+    <artifactId>jakarta.xml.bind-api</artifactId>
+    <version>2.3.2</version>
+</dependency>
+<dependency>
+    <groupId>com.sun.xml.bind</groupId>
+    <artifactId>jaxb-impl</artifactId>
+    <version>2.3.2</version>
+</dependency>
+
+<!-- Runtime, com.sun.xml.bind module -->
+<dependency>
+    <groupId>org.glassfish.jaxb</groupId>
+    <artifactId>jaxb-runtime</artifactId>
+    <version>2.3.2</version>
+</dependency>
+<dependency>
+        <groupId>com.levigo.jbig2</groupId>
+        <artifactId>levigo-jbig2-imageio</artifactId>
+        <version>1.6.5</version>
+    </dependency>
+    <dependency>
+        <groupId>com.github.jai-imageio</groupId>
+        <artifactId>jai-imageio-core</artifactId>
+        <version>1.3.1</version>
+    </dependency>
+    <!-- grobid module -->
+    
+  <dependency>
+        <groupId>org.grobid</groupId>
+        <artifactId>grobid-core</artifactId>
+        <version>0.7.2</version>
+    </dependency>
+      <dependency>
+            <groupId>org.apache.httpcomponents</groupId>
+            <artifactId>httpmime</artifactId>
+            <version>4.2.4</version>
+        </dependency>
+<dependency>
+    <groupId>com.fasterxml.jackson.core</groupId>
+    <artifactId>jackson-core</artifactId>
+    <version>2.10.2</version>
+</dependency>
+<dependency>
+    <groupId>com.google.guava</groupId>
+    <artifactId>guava</artifactId>
+    <version>31.0.1-jre</version>
+</dependency>
+<dependency>
+   <groupId>de.julielab</groupId>
+   <artifactId>aliasi-lingpipe</artifactId>
+   <version>4.1.0</version>
+</dependency>
+<dependency>
+  <groupId>com.google.guava</groupId>
+  <artifactId>guava</artifactId>
+  <version>31.1-jre</version>
+  <!-- or, for Android: -->
+</dependency>
+<dependency>
+    <groupId>dev.langchain4j</groupId>
+    <artifactId>langchain4j</artifactId>
+    <version>0.24.0</version>
+</dependency>
+<dependency>
+  <groupId>dev.langchain4j</groupId>
+  <artifactId>langchain4j-local-ai</artifactId>
+  <version>0.24.0</version>
+</dependency>
+  </dependencies>
+
+  <build>
+	  <plugins>
+      <!-- any other plugins -->
+      <plugin>
+        <artifactId>maven-assembly-plugin</artifactId>
+        <executions>
+          <execution>
+            <phase>package</phase>
+            <goals>
+              <goal>single</goal>
+            </goals>
+          </execution>
+        </executions>
+        <configuration>
+          <descriptorRefs>
+            <descriptorRef>jar-with-dependencies</descriptorRef>
+          </descriptorRefs>
+        </configuration>
+      </plugin>
+</plugins>
+    <pluginManagement><!-- lock down plugins versions to avoid using Maven defaults (may be moved to parent pom) -->
+      <plugins>
+		
+        <!-- clean lifecycle, see https://maven.apache.org/ref/current/maven-core/lifecycles.html#clean_Lifecycle -->
+        <plugin>
+          <artifactId>maven-clean-plugin</artifactId>
+          <version>3.1.0</version>
+        </plugin>
+        <!-- default lifecycle, jar packaging: see https://maven.apache.org/ref/current/maven-core/default-bindings.html#Plugin_bindings_for_jar_packaging -->
+        <plugin>
+          <artifactId>maven-resources-plugin</artifactId>
+          <version>3.0.2</version>
+        </plugin>
+        <plugin>
+          <artifactId>maven-compiler-plugin</artifactId>
+          <version>3.8.0</version>
+           <configuration>
+         <release>11</release>
+    </configuration>
+        </plugin>
+        <plugin>
+          <artifactId>maven-surefire-plugin</artifactId>
+          <configuration>
+                <argLine>-Dtrust_all_cert=true</argLine>
+           </configuration>
+          <version>2.22.1</version>
+        </plugin>
+        <plugin>
+          <artifactId>maven-jar-plugin</artifactId>
+          <version>3.0.2</version>
+        </plugin>
+        <plugin>
+          <artifactId>maven-install-plugin</artifactId>
+          <version>2.5.2</version>
+        </plugin>
+        <plugin>
+          <artifactId>maven-deploy-plugin</artifactId>
+          <version>2.8.2</version>
+        </plugin>
+        <!-- site lifecycle, see https://maven.apache.org/ref/current/maven-core/lifecycles.html#site_Lifecycle -->
+        <plugin>
+          <artifactId>maven-site-plugin</artifactId>
+          <version>3.7.1</version>
+        </plugin>
+        <plugin>
+          <artifactId>maven-project-info-reports-plugin</artifactId>
+          <version>3.0.0</version>
+        </plugin>
+        <plugin>
+            <groupId>org.codehaus.mojo</groupId>
+            <artifactId>exec-maven-plugin</artifactId>
+            <version>3.0.0</version>
+            <executions>
+                <execution>
+                    <id>run-main-class</id>
+          
+                    <goals>
+                        <goal>java</goal>
+                    </goals>
+                    <configuration>
+                        <mainClass>gov.lanl.langchain.LChainTest</mainClass> <!-- Replace 'your.package.LChainTest' with the correct package and class name -->
+                        <!-- Optionally, you can provide additional configuration such as arguments -->
+                        <!-- <arguments>
+                            <argument>arg1</argument>
+                            <argument>arg2</argument>
+                        </arguments> -->
+                    </configuration>
+                </execution>
+            </executions>
+        </plugin>
+        <plugin>
+   <groupId>org.codehaus.mojo</groupId>
+        <artifactId>properties-maven-plugin</artifactId>
+        <version>1.0-alpha-2</version>
+  <executions>
+    <execution>
+        <goals>
+            <goal>generate</goal>
+        </goals>
+        <configuration>
+            <properties>
+                 
+                 <property>
+                    <name>javax.net.ssl.keyStore</name>
+                    <value>cacerts</value>
+                </property>
+                <property>
+                    <name>javax.net.ssl.keyStorePassword</name>
+                    <value>changeit</value>
+                </property>
+                <property>
+                <name>trust_all_cert</name>
+					<value>true</value>
+					</property>
+                <property>
+                    <name>maven.wagon.http.ssl.insecure</name>
+                    <value>true</value>
+                </property>
+                <property>
+                    <name>maven.wagon.http.ssl.allowall</name>
+                    <value>true</value>
+                </property>
+            </properties>
+        </configuration>
+    </execution>
+</executions>
+</plugin>
+      </plugins>
+    </pluginManagement>
+  </build>
+  
+</project>
