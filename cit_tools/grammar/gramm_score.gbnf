@@ -1,0 +1,11 @@
+root ::= Citations
+Citation ::= "{"   ws   "\"url\":"   ws   string   ","   ws   "\"category\":"   ws   string   ","   ws   "\"category_confidence_score\":"   ws   number   ","   ws   "\"intent\":"   ws   string   "}"
+Citationlist ::= "[]" | "["   ws   Citation   (","   ws   Citation)*   "]"
+Citations ::= "{"   ws   "\"citations\":"   ws   Citationlist   "}"
+Citationslist ::= "[]" | "["   ws   Citations   (","   ws   Citations)*   "]"
+string ::= "\""   ([^"]*)   "\""
+boolean ::= "true" | "false"
+ws ::= [ \t\n]*
+number ::= [0-9]+   "."?   [0-9]*
+stringlist ::= "["   ws   "]" | "["   ws   string   (","   ws   string)*   ws   "]"
+numberlist ::= "["   ws   "]" | "["   ws   string   (","   ws   number)*   ws   "]"

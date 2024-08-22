@@ -1,0 +1,275 @@
+import pandas as pd
+import seaborn as sns
+import matplotlib.pyplot as plt
+from matplotlib.ticker import MaxNLocator
+from urllib.parse import urlparse
+import networkx as nx
+from pyvis.network import Network
+import numpy as np
+import regex
+#net= Network(notebook=True)
+net = Network('1750px',  width='100%',notebook=False)
+#filename = "/Users/ludab/Laptop/project2023/urldiscovery/data/arxiv/Software_llama_res_p1.csv"
+import json
+import seaborn as sns
+import re
+import random
+
+#dataset label 0
+#software label 1
+#media 2
+#other 3
+
+def data_clean(feature_data):
+    feature_data = feature_data.apply(lambda x: text_converter(x))
+    #feature_data = feature_data.apply(lambda x: x.lower())
+    return feature_data
+#Function to remove URLs from a sentence
+def remove_urls(text):
+    url_pattern = re.compile(r"http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\\(\\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+")
+    return re.sub(url_pattern, "", text)
+
+def remove_urls_c(text):
+    # Regular expression to match URLs
+    url_pattern = r'http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\\(\\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+'
+    
+    # Replace URLs with blanks
+    return re.sub(url_pattern, '', text)
+
+def text_converter(value):
+    try:
+        return str(value)
+    except:
+        return ''
+     
+def short_rows(df, text_column, url_column):
+    """Removes rows from a Pandas DataFrame if the text after removing the URL is less than a specified length.
+
+    Args:
+        df: A Pandas DataFrame.
+        text_column: The name of the column containing the text.
+        url_column: The name of the column containing the URL.
+        min_text_length: The minimum length of the text after removing the URL.
+
+    Returns:
+        A Pandas DataFrame with the short rows removed.
+    """
+    mdf = df.copy() 
+    mdf[text_column] = data_clean(mdf[text_column])  # Ensure all values in text_column are strings
+    mdf[url_column] = data_clean(mdf[url_column])  # Ensure all values in url_column are strings
+   
+    # Remove the URL from the text.
+    #mdf["text_without_url"] = mdf[text_column].str.replace(mdf[url_column], "")
+    
+    mdf["text_without_url"] = mdf[text_column].apply(remove_urls_c)
+    #       apply(lambda x: x.replace(df[url_column][x], ""))
+    # Drop the rows where the text after removing the URL is less than the minimum length.
+    #mdf["text_without_url"] = data_clean(mdf["text_without_url"]) 
+    #mdf = mdf[mdf["text_without_url"].str.len() >= min_text_length]
+
+    return mdf
+
+def contains_multiple_urls(text):
+    urls = re.findall(r'http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\\(\\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+', text)
+    #print(urls)
+    return len(urls) == 1  
+def filter_and_save_csv(input_file, output_file):
+    # Read the CSV file into a DataFrame
+    df = pd.read_csv(input_file)
+    df["text"] = df["text"].astype(str)
+    df["url"] = df["url"].astype(str)
+    df['text'] = data_clean(df['text'])
+    
+    groupedt = df.groupby(['regex_label'])
+    print("after loading")
+    print(groupedt.size()) 
+    initial_counts = groupedt.size().reset_index(name='Initial_Count')
+    total_rows_original = df.shape[0]
+    print("total rows",total_rows_original)
+    distinct_url_count = df['url'].nunique()
+    print(f"Distinct count of URLs: {distinct_url_count}")
+    #print(df.shape)
+    #print(df.head())
+    #grouped = df.groupby(['regex_label', 'year'])
+    #print(grouped.size())
+    #df.columns =['document', 'url', 'classification1', 'classification2','ucount','id']
+    #document,sentenceid,url,loc,text,year,count,txl,regex_label
+    # Define filter conditions
+    filter_condition = (df['regex_label'] != 4) # &  (~df['count'] > 1) & (~df['txl'] < 20)
+
+    # Apply the filter to the DataFrame
+    filtered_df = df[filter_condition]
+    total_rows = filtered_df.shape[0]
+    print("total rows labeled",total_rows)
+    print(filtered_df.shape)
+    print(filtered_df.head())
+    filter_condition = ( filtered_df['count'] == 1)
+    
+    filtered_df1 = filtered_df[filter_condition]
+    filtered_grouped = filtered_df1.groupby(['regex_label']).size().reset_index(name='Filtered_Count')
+    total_rows_filtered = filtered_df1.shape[0]
+    percentage_reduction = ((total_rows - total_rows_filtered) / total_rows) * 100
+    print(f"Percentage reduction multiple in rows: {percentage_reduction:.2f}%")
+    #print(filtered_df1.shape)
+    #print(filtered_df1.head())
+    print("after excluding multiple:")
+    grouped1 = filtered_df1.groupby(['regex_label'])
+    print(grouped1.size())
+    combined_counts = pd.merge(initial_counts, filtered_grouped, on='regex_label')
+    combined_counts['Percentage_Reduction'] = ((combined_counts['Initial_Count'] - combined_counts['Filtered_Count']) / combined_counts['Initial_Count']) * 100
+    print(combined_counts)
+ 
+    
+    #print(filtered_df1.shape)
+    #print(filtered_df1.head())
+    dfs = short_rows(filtered_df1, "text", "url")
+    
+    filter_condition = (dfs['text_without_url'].str.len() > 20)
+    print("after dropping small text:")
+    
+    filt_df = dfs[filter_condition]
+    #remove_short_rows(filtered_df1, "text", "url", min_text_length=25)
+    total_rows_filter = filt_df.shape[0]
+    percentage_reduction = ((total_rows - total_rows_filter) / total_rows) * 100
+    print(f"Percentage reduction short from total in rows: {percentage_reduction:.2f}%")
+    percentage_reduction = ((total_rows_filtered - total_rows_filter) / total_rows_filtered) * 100
+    print(f"Percentage reduction short in rows: {percentage_reduction:.2f}%")
+  
+    #print(filt_df.shape)
+    #print(filt_df.head())
+    grouped2 = filt_df.groupby(['regex_label'])
+    print(grouped2.size())
+    
+    filtered_gr = filt_df.groupby(['regex_label']).size().reset_index(name='FilteredS_Count')
+    combined = pd.merge(combined_counts, filtered_gr, on='regex_label')
+    combined['Percentage_R'] = ((combined['Filtered_Count'] - combined['FilteredS_Count']) / combined['Filtered_Count']) * 100
+    print(combined)
+    # Save the filtered DataFrame to a new CSV file
+    filt_df.to_csv(output_file, index=False)
+    
+def load_diff_text(df):   
+    different_csv_path = "/Users/ludab/Laptop/project2023/urldiscovery/data//NoV16/all_3context_urls_d.csv"
+    #different_csv_path = "/Users/ludab/Laptop/project2023/urldiscovery/data/NoV16/all_onecit_urls_filtered_output2.csv"
+    different_df = pd.read_csv(different_csv_path)
+    
+    # Update the 'text' column based on the condition that 'sentenceid' is the same
+    df['text'] = df.apply(
+        lambda row: different_df[different_df['sentenceid'] == row['sentenceid']]['text'].values[0]
+        if row['sentenceid'] in different_df['sentenceid'].values else row['text'],
+        axis=1
+       
+    )
+    return df
+  
+if __name__ == '__main__':
+    #input_file =  "/Users/ludab/Laptop/project2023/urldiscovery/data/all_onecit_urls.csv"  # Specify the input CSV file path
+    output_file = "/Users/ludab/Laptop/project2023/urldiscovery/data/Nov29/all_onecit_urls_filtered_output2.csv"  # Specify the output CSV file path
+    noutput_file = "/Users/ludab/Laptop/project2023/urldiscovery/data/Nov29/all_onecit_urls_dataset2.csv"  # Specify the output CSV file path
+    input_file =  "/Users/ludab/Laptop/project2023/urldiscovery/data/NoV16/all_onecit_urls.csv"  # Specify the input CSV file path
+    
+    
+    output_file2 = "/Users/ludab/Laptop/project2023/urldiscovery/data/Nov29/all_3context_url_notremoved_filtered.csv"
+    output_file3 = "/Users/ludab/Laptop/project2023/urldiscovery/data/Nov29/all_3context_url_notremoved_filtered_dataset.csv"
+    noutput_file = "/Users/ludab/Laptop/project2023/urldiscovery/data/Nov29/all_onecit_urls_dataset2_n.csv"  # Specify the output CSV file path
+  
+    
+    
+  
+    #filter_and_save_csv(input_file, output_file)
+    
+    df = pd.read_csv(output_file2)
+    
+    #df = load_diff_text(df)
+    groupedb = df.groupby(['regex_label'])
+    print(groupedb.size())
+    initial_counts = groupedb.size().reset_index(name='Initial_Count')
+    
+    df = df[df['ltext'].apply(contains_multiple_urls)]
+    
+    grouped = df.groupby(['regex_label'])
+    print(grouped.size())
+    
+    # Group the DataFrame by label and year
+    #grouped = df.groupby(['regex_label', 'year'])
+    grouped = df.groupby(['regex_label'])
+    print("after  filtering context multiple")
+    print(grouped.size()) 
+    filtered_grouped = df.groupby(['regex_label']).size().reset_index(name='Filtered_Count')
+    combined_counts = pd.merge(initial_counts, filtered_grouped, on='regex_label')
+    combined_counts['Percentage_Reduction'] = ((combined_counts['Initial_Count'] - combined_counts['Filtered_Count']) / combined_counts['Initial_Count']) * 100
+    print(combined_counts)
+    # Calculate the minimum number of records for each label and year combination
+    min_records = grouped.size().min()
+    min_records_dataset = min_records*2
+    print(min_records_dataset)
+    # Randomly sample an equal number of records for each label and year
+    #print(grouped.head(10))
+    
+    sampled_data = []
+    for (regex_label), group in grouped:
+     print(regex_label)    
+     if regex_label[0] == 0:
+        #print(regex_label)
+        sampled_data.append(group.sample(n=5000, random_state=42))
+     elif regex_label[0] == 1:
+        #print(regex_label)
+        sampled_data.append(group.sample(n=5000, random_state=42))
+     elif regex_label[0] == 2:
+        #print(regex_label)
+        sampled_data.append(group.sample(n=2100, random_state=42))    
+     elif regex_label[0] == 3:
+        #print(regex_label)
+        sampled_data.append(group.sample(n=5000, random_state=42))
+    
+     else:
+        sampled_data.append(group.sample(n=min_records, random_state=42))
+
+    filtered_df = pd.concat(sampled_data)
+    grouped0 = filtered_df.groupby(['regex_label'])
+    print("after sampling")
+    print(grouped0.size()) 
+    filtered_df.to_csv(output_file3, index=False)
+    # Define the probability to remove URLs (80%)
+    #remove_url_probability = 0.8
+    remove_url_probability = 1
+    
+    substituted_data = []
+    url_pattern = r'http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\\(\\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+'
+    for regex_label, group in filtered_df.groupby('regex_label'):
+        # Determine the number of records to keep (20%)
+        print(regex_label)
+        num_records_to_keep = int(len(group) * (1 - remove_url_probability))
+         
+        num_records_to_sub = int(len(group)) -  num_records_to_keep
+        print(num_records_to_sub)
+        # Randomly select records to remove URLs
+        records_to_substitute = random.sample(group.index.tolist(), num_records_to_sub)
+        #print(records_to_substitute)
+        # Apply URL removal to selected records
+        group.loc[records_to_substitute, 'text_other'] = group.loc[records_to_substitute, 'text_other'].apply(remove_urls_c)
+        
+        substituted_data.append(group)
+        
+        sub_df = pd.concat(substituted_data)
+        #sub_df['has_url'] = sub_df['text'].str.contains(url_pattern, flags=re.IGNORECASE)
+        #num_records_with_url = sub_df['has_url'].sum()
+        #print(f"Number of records with URLs: {num_records_with_url}") 
+        # Save the filtered DataFrame to a new CSV file
+        #grouped = filtered_df.groupby(['regex_label', 'year'])
+        #print(grouped.size())
+    grouped = sub_df.groupby(['regex_label'])
+    print(grouped.size())
+       # Define a regular expression pattern to match URLs
+    #url_pattern = r'http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\\(\\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+'
+
+    # Apply the regular expression to the 'text' column and count the matches
+    #sub_df['has_url'] = sub_df['text'].str.contains(url_pattern, flags=re.IGNORECASE)
+
+    # Count the records that have URLs in the 'text' column
+    #num_records_with_url = sub_df['has_url'].sum()
+
+    #print(f"Number of records with URLs: {num_records_with_url}") 
+    sub_df.to_csv(noutput_file, index=False)
+        
+        
+        

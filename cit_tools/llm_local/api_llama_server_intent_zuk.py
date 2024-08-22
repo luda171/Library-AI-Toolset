@@ -1,0 +1,218 @@
+from llama_cpp.llama import Llama, LlamaGrammar
+import httpx
+import json
+import csv
+import ast
+import re
+import nltk
+from nltk.tokenize import word_tokenize, sent_tokenize
+import time
+
+#nltk.download('punkt')  # Download the necessary resource for tokenization
+import requests
+
+
+project_dir='/Users/ludab/Laptop/project2024/ai-document-tools/cit_tools/'            
+def make_post_request(url, data,timeout=300):
+    headers = {'Content-Type': 'application/json'}
+    while True:
+        start_time = time.time()  # Record start time
+        response = requests.post(url, json=data, headers=headers,timeout=timeout)
+        end_time = time.time()  # Record end time
+        elapsed_time = end_time - start_time
+        if response.status_code == 200:
+            return response.json(),elapsed_time
+        else:
+            print("Error:", response.status_code)
+            #return None, elapsed_time
+            print("Retrying in 1 minutes...")
+            time.sleep(60)  # Wait for 5 minutes before retrying
+
+    
+def get_grammar_text(file_path):
+    with open(file_path, 'r') as file:
+        grammar_text = file.read()
+    return grammar_text
+
+def limit_text_around_url(text, url, token_limit=2000):
+    # Find the position of the URL in the text
+    url_position = text.find(url)
+
+    # Check if the URL is present in the text
+    if url_position != -1:
+        # Tokenize the text into words
+        words = word_tokenize(text)
+
+        # Determine the start and end index for the token limit around the URL
+        start_index = max(0, url_position - token_limit // 2)
+        end_index = min(len(words), url_position + token_limit // 2)
+
+        # Extract the limited text around the URL
+        limited_text = ' '.join(words[start_index:end_index])
+
+        return limited_text
+
+    # If the URL is not found, return the entire text
+    return text
+
+def parse_json(json_str):
+    """Parses a JSON string and returns a list of citations."""
+    try:
+        json_data = json.loads(json_str)
+        print (json_data)
+    except json.JSONDecodeError:
+        cleaned_json_str = json_str.replace('\\"', '"').replace('\+', '+')  # Clean up escaped quotes
+        print(cleaned_json_str)
+        try:
+          json_data = json.loads(cleaned_json_str)
+        except:
+            return []
+        #general error catching 
+    except:
+        return [] 
+        #json_data = {}
+        #for match in re.finditer(r"\{.*?\}", cleaned_json_str):
+            #json_data.update(json.loads(match.group(0)))
+    citations = []
+    for citation in json_data["citations"]:
+        citations.append({
+            "url": citation["url"],
+            "category": citation["category"],
+            "intent": citation["intent"],
+            #"sentiment": citation["sentiment"]        
+        })
+    return citations  
+#grammar_text = httpx.get("https://raw.githubusercontent.com/ggerganov/llama.cpp/master/grammars/json_arr.gbnf").text
+
+gf=project_dir+"/grammar/gramm_score.gbnf"
+grammar_text = get_grammar_text(gf)
+#"https://raw.githubusercontent.com/ggerganov/llama.cpp/master/grammars/json_arr.gbnf"
+print(grammar_text)
+#grammar = LlamaGrammar.from_string(grammar_text)
+
+#model_path = "/Users/ludab/Laptop/project2024/mythical-destroyer-v2-l2-13b.Q5_K_M.gguf"
+#model_path = "/Users/ludab/Laptop/project2024/llama-2-13b-chat.ggmlv3.q4_K_M.bin"
+#llm_model = Llama(model_path = model_path,
+#              n_ctx = 4096,            # context window size
+#              n_gpu_layers = 4,
+#              n_threads=4,
+#              temperature=0,        # enable GPU
+              #use_mlock = True
+#              ) 
+serviceurl = 'https://wizard.lanl.gov/completion'
+#data = {"prompt": "Could you suggest name of machine", "n_predict": 128}
+#llm = Llama("/Users/ludab/Laptop/project2024/llama-2-13b.Q8_0.gguf")
+
+import platform
+print(platform.platform())
+
+
+csv_file_path = project_dir+"/datasets/software_citation_intent_merged.csv"
+
+output_file = project_dir + "/output/cit_url_data_results_2_corr_intentbert_01_sent_llama.csv"
+# Read the last processed row count from a checkpoint file, if it exists
+checkpoint_file_path = project_dir+"/output/checkpoint28.txt"
+last_processed_row_count = 1
+try:
+    with open(checkpoint_file_path, 'r') as checkpoint_file:
+        last_processed_row_count = int(checkpoint_file.read().strip())
+except FileNotFoundError:
+    pass
+total_elapsed_time = 0
+total = 0;
+# Open the CSV file for writing in append mode
+with open(output_file, 'a', newline='', encoding='utf-8') as ff:
+    csv_writer = csv.writer(ff)
+
+    # Open the CSV file for reading
+    with open(csv_file_path, 'r', encoding='utf-8') as csvfile:
+        # Create a CSV reader
+        csv_reader = csv.DictReader(csvfile)
+        total = total+1 
+        # Iterate through each row in the CSV file
+        for row_count, row in enumerate(csv_reader, start=2):
+            # Skip rows until the last processed row count is encountered
+            if row_count <= last_processed_row_count:
+                continue
+            id = row['id']          
+            sentence = row['sentence']
+            used = row['used']
+            text = row['text']
+            created = row['created']
+            mention = row['mention']
+            context = row['context']            
+            label = row['label']
+            print(label)
+            if (label == '3'): continue;
+            prompt3 =f"""
+            Task: Given a text fragment from a scientific paper, delimited by triple backticks,
+             which has  citation, your task is to classify the  citation into categories (software, dataset, other)
+              and classify the citation intent. On a scale from one to ten  provide citation intent classification confidence score 
+                for the given citation as category_confidence_score.
+            Instructions:           
+            Read the text fragment provided, which includes a citation  enclosed within triple backticks.
+            Extract  citation or citation url to the url key. 
+            Classify the citation into one of the following categories:
+            software: If the  citation refers to software or a software-related resource.
+            dataset: If the  citation refers to a dataset or a data-related resource.
+            other: If the  citation does not fit into the above categories.  
+            Classify the citation intent based on authorship as follows:
+            "created": Indicates that the software or dataset was developed by the authors of the paper.
+            "used": Indicates that the authors utilized or mentioned software or a dataset created by someone else in their paper.
+            "uncertain": Used when there is insufficient information to determine the intent as either "created" or "used".
+            Use only one lowercase word for category, intent classifications. 
+            Format your output in JSON format, featuring keys such as url, category,category_confidence_score,intent. 
+             ```{sentence}```
+            """
+            
+           
+            data = {"prompt": prompt3, "grammar" : grammar_text}
+            resp, elapsed_time = make_post_request(serviceurl, data)
+            # Extract values from the JSON response
+            print(resp)
+            print (elapsed_time)
+                        
+            intent = "error"
+            url1 = "error"
+            category = "error"
+            category_confidence_score ="-1"
+                       
+            try:
+                
+                print(type(resp))
+                
+                parsed_content = json.loads(resp['content'])
+                print("parsed")
+                print(parsed_content)
+                citations = parsed_content['citations']
+                print("citations")
+                print(citations)
+                for citation in citations:
+                    url1 = citation['url']
+                    category = citation['category']
+                    intent = citation['intent']
+                    category_confidence_score = citation['category_confidence_score']
+                
+                # Print category and intent
+                    print("Category:", category)
+                    print("Intent:", intent)
+                    print("Confidence:", category_confidence_score)            
+                
+                
+                
+            except:
+                print(" error:")
+           
+            csv_writer.writerow([id, sentence, used, created, mention, context,label,text, category, intent,category_confidence_score,url1])
+            total_elapsed_time += elapsed_time
+            
+            # Update the checkpoint with the current row count
+            last_processed_row_count = row_count
+            with open(checkpoint_file_path, 'w') as checkpoint_file:
+                checkpoint_file.write(str(last_processed_row_count))
+average_elapsed_time = total_elapsed_time / total
+print("average")
+print(average_elapsed_time)
+print("llama:finished")
+
+         
