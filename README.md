@@ -1,1 +1,3 @@
-Toolset
+Collection of tools designed to parse documents, such as PDFs, and extract structured elements including URLs, citation contexts, tables, formulas, and figures. This toolset leverages  AI-based text extraction and classification methods, providing robust solutions for various document processing needs.
+
+The toolset includes PDF converters to text and parsers, featuring  AI-based text extraction and classification methods. For example, it can classify  URI citation contexts by resource type, such as software or datasets, and determine the intent behind software mentions. The toolset also utilizes PDF-structured information, such as abstracts and authors, to automate common library tasks. These tasks include metadata extraction, topic detection, citation analysis, language detection, and the description of images and media.
