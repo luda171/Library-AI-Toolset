@@ -2,13 +2,13 @@
 ## to compile use maven : 
 mvn clean install
 
-### gov.lanl.urlcit.ResourceToTei.java
+### Convert from PDF to TEI
 The processpdf.sh script can be run as follows to convert PDFs to TEI:
 nohup ./processPDFtoTEI.sh > out.txt  &
 The TEI file will have the same name as the PDF file, but with the TEI extension. For example, the TEI file for the PDF file 1901.00033v1.pdf would be called 1901.00033v1.tei. 
 the LoopFileStructure(String dir) has logic to loop through directoris, adjust for different directory structure.
 
-### gov.lanl.urlcit.arxiv.CitParser.java
+### Extract Sentences
 
 The extracttei.sh script runs the CitParser.java program to extract sentences from TEI files. This program generates two JSONL files for each TEI file processed: one with the prefix urlsent and the other with the prefix allsent.
 
@@ -25,7 +25,7 @@ the JSONL file serializes Sentence class to json fields, example of JSON line:
 Multiple urls would be presented as list. 
 if url has title in bibliography, it will   
 
-### bulk conversion to TEI  using genue grobid utility
+### Bulk conversion to TEI  using genue grobid utility
 to test you also can use this grobid tool directly.
 go  to directory where grobid library installed {}/grobid (see grobid manual)
 example of comand:
